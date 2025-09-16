@@ -226,8 +226,8 @@
                             <div class="total-row"><span>Thành Tiền:</span><span id="subtotal" class="text-right"></span></div>
                             <div class="total-row"><span>Giảm Giá:</span><span id="discount" class="text-right"></span></div>
                             <div class="total-row"><span>Tổng Tiền Sau Chiết Khấu:</span><span id="total-after-discount" class="text-right"></span></div>
-                            <div class="total-row"><span>VAT (<span id="vat-percent"></span>):</span><span id="vat-amount" class="text-right"></span></div>
-                            <div class="total-row total-final"><span>Phải Thanh Toán:</span><span id="total-after-vat" class="text-right text-bold"></span></div>
+                            <!-- VAT ROW REMOVED -->
+                            <div class="total-row total-final"><span>Phải Thanh Toán:</span><span id="total-final-amount" class="text-right text-bold"></span></div>
                             <div class="amount-in-words"><span class="text-bold">Bằng Chữ:</span> <span id="amount-words"></span></div>
                         </div>
                     </div>
@@ -314,10 +314,22 @@
                     addressRow.style.display = 'none';
                 }
                 document.getElementById('print-time').textContent = new Date().toLocaleString('vi-VN');
-                document.getElementById('subtotal').textContent = formatCurrency(data.subtotal) + ' VNĐ'; document.getElementById('discount').textContent = formatCurrency(data.discount) + ' VNĐ'; document.getElementById('total-after-discount').textContent = formatCurrency(data.totalAfterDiscount) + ' VNĐ'; document.getElementById('vat-percent').textContent = data.vatPercent || '0%'; document.getElementById('vat-amount').textContent = formatCurrency(data.vatAmount) + ' VNĐ'; document.getElementById('total-after-vat').textContent = formatCurrency(data.totalAfterVat) + ' VNĐ';
-                document.getElementById('amount-words').textContent = numberToWords(data.totalAfterVat); document.getElementById('ghi_chu').textContent = data.notes || 'Không có'; document.getElementById('bank-name').textContent = data.bankName || 'N/A'; document.getElementById('account-number').textContent = data.accountNumber || 'N/A'; document.getElementById('account-holder').textContent = data.accountHolder || 'N/A';
+                document.getElementById('subtotal').textContent = formatCurrency(data.subtotal) + ' VNĐ';
+                document.getElementById('discount').textContent = formatCurrency(data.discount) + ' VNĐ';
+                document.getElementById('total-after-discount').textContent = formatCurrency(data.totalAfterDiscount) + ' VNĐ';
+                
+                // *** LOGIC CHANGE START ***
+                // The final amount is now the total after discount
+                const finalAmount = data.totalAfterDiscount;
+                document.getElementById('total-final-amount').textContent = formatCurrency(finalAmount) + ' VNĐ';
+                document.getElementById('amount-words').textContent = numberToWords(finalAmount);
+                // *** LOGIC CHANGE END ***
+
+                document.getElementById('ghi_chu').textContent = data.notes || 'Không có'; document.getElementById('bank-name').textContent = data.bankName || 'N/A'; document.getElementById('account-number').textContent = data.accountNumber || 'N/A'; document.getElementById('account-holder').textContent = data.accountHolder || 'N/A';
                 displayProducts(data.productsJson); displayOrderQRCode(data.orderNumber);
-                return updateQRCode(cleanNumberString(data.totalAfterVat), data.orderNumber, bankCode, data.accountNumber, data.accountHolder);
+                
+                // Update QR code with the final amount
+                return updateQRCode(cleanNumberString(finalAmount), data.orderNumber, bankCode, data.accountNumber, data.accountHolder);
             } catch (error) {
                 console.error('Lỗi nghiêm trọng khi tải dữ liệu hóa đơn:', error);
                 document.body.innerHTML = `<h1>Lỗi khi hiển thị hóa đơn</h1><p>${error.message}</p>`;
@@ -328,7 +340,7 @@
         function loadDataFromUrl() {
             const data = {
                 orderNumber: getUrlParameter('so_don_hang'), orderDate: getUrlParameter('ngay_dat'), customerName: getUrlParameter('khach_hang'), diaChiKhachHang: getUrlParameter('dia_chi_khach_hang'),
-                subtotal: getUrlParameter('thanh_tien'), discount: getUrlParameter('giam_gia'), totalAfterDiscount: getUrlParameter('tong_tien_sau_ck'), vatPercent: getUrlParameter('phan_tram_vat'), vatAmount: getUrlParameter('tien_vat'), totalAfterVat: getUrlParameter('tong_tien_sau_vat'),
+                subtotal: getUrlParameter('thanh_tien'), discount: getUrlParameter('giam_gia'), totalAfterDiscount: getUrlParameter('tong_tien_sau_ck'),
                 notes: getUrlParameter('ghi_chu'), productsJson: getUrlParameter('products'), bankName: getUrlParameter('bank_name'), accountNumber: getUrlParameter('account_number'), accountHolder: getUrlParameter('account_holder'),
                 tenCongTy: getUrlParameter('ten_cong_ty'), diaChi: getUrlParameter('dia_chi'), soDienThoai: getUrlParameter('so_dien_thoai'), email: getUrlParameter('email'), website: getUrlParameter('website')
             };
@@ -341,11 +353,11 @@
                 { msp: "HT-002", sanpham: "Dịch vụ hỗ trợ kỹ thuật", dvt: "Năm", soluong: 1, soluongL: 5, dongia: "1200000", thanhtien: "1200000", ghi_chu: "" },
                 { msp: "TT-003", sanpham: "Tích hợp cổng thanh toán", dvt: "Lần", soluong: 1, soluongL: 0, dongia: "1000000", thanhtien: "1000000", ghi_chu: "" },
             ];
-            const subtotal = 5700000; const discount = 200000; const totalAfterDiscount = subtotal - discount; const vatPercent = "8%"; const vatAmount = totalAfterDiscount * 0.08; const totalAfterVat = totalAfterDiscount + vatAmount;
+            const subtotal = 5700000; const discount = 200000; const totalAfterDiscount = subtotal - discount;
             const data = {
                 tenCongTy: 'CÔNG TY TNHH CHẾ BIẾN HẢI SẢN BA LÀNG', diaChi: 'Số 05, đường Đỗ Đại, TDP Thượng Hải, phường Tĩnh Gia, Thanh Hóa', soDienThoai: '0976459995', email: 'balangth@balang.com.vn', website: 'www.balang.com.vn',
                 orderNumber: 'DEMO-EMS-001', orderDate: new Date().toISOString(), customerName: 'Khách hàng Demo', diaChiKhachHang: '25/10 Hậu Giang, Phường 4, Quận Tân Bình, TP.HCM',
-                subtotal: subtotal.toString(), discount: discount.toString(), totalAfterDiscount: totalAfterDiscount.toString(), vatPercent: vatPercent, vatAmount: vatAmount.toString(), totalAfterVat: totalAfterVat.toString(),
+                subtotal: subtotal.toString(), discount: discount.toString(), totalAfterDiscount: totalAfterDiscount.toString(),
                 notes: 'MST: 0316870151. Đại diện pháp luật: Nguyễn Tấn Hiền.', productsJson: encodeURIComponent(JSON.stringify(demoProducts)),
                 bankName: 'ACB', accountNumber: '181119878', accountHolder: 'CONG TY TNHH GIAI PHAP SO EMS'
             };
