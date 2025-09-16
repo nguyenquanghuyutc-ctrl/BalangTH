@@ -353,4 +353,74 @@
             ];
             const subtotal = 5700000; const discount = 200000; const totalAfterDiscount = subtotal - discount;
             const data = {
-                tenCongTy: 'CÔNG TY TNHH CHẾ BIẾN HẢI SẢN BA LÀNG', diaChi: 'Số 05, đường Đỗ Đại, TDP Thượng Hải, phường Tĩnh Gia, Thanh Hóa', soDienThoai: '0976
+                tenCongTy: 'CÔNG TY TNHH CHẾ BIẾN HẢI SẢN BA LÀNG', diaChi: 'Số 05, đường Đỗ Đại, TDP Thượng Hải, phường Tĩnh Gia, Thanh Hóa', soDienThoai: '0976459995', email: 'balangth@balang.com.vn', website: 'www.balang.com.vn',
+                orderNumber: 'DEMO-EMS-001', orderDate: new Date().toISOString(), customerName: 'Khách hàng Demo', diaChiKhachHang: '25/10 Hậu Giang, Phường 4, Quận Tân Bình, TP.HCM',
+                subtotal: subtotal.toString(), discount: discount.toString(), totalAfterDiscount: totalAfterDiscount.toString(),
+                notes: 'MST: 0316870151. Đại diện pháp luật: Nguyễn Tấn Hiền.', productsJson: encodeURIComponent(JSON.stringify(demoProducts)),
+                bankName: 'ACB', accountNumber: '181119878', accountHolder: 'CONG TY TNHH GIAI PHAP SO EMS'
+            };
+            const watermark = document.createElement('div'); watermark.className = 'demo-watermark'; watermark.innerHTML = 'Bản Demo<br><span style="font-size: 0.5em; letter-spacing: 1px;">EMS SOLUTION</span>'; document.getElementById('bill-container').appendChild(watermark);
+            return populateInvoice(data);
+        }
+        function changeFormat(format) {
+            document.body.classList.remove('format-80mm', 'format-a4', 'format-a5');
+            document.body.classList.add('format-' + format);
+
+            const totalsLabels = document.querySelectorAll('.totals-box .total-row > span:first-child');
+            totalsLabels.forEach(label => {
+                if (label.dataset.originalText) {
+                    label.innerHTML = label.dataset.originalText;
+                }
+            });
+
+            if (format === '80mm') {
+                const paymentSection = document.querySelector('.payment-section');
+                const totalsBox = document.querySelector('.totals-box');
+                if (paymentSection && totalsBox) {
+                    totalsBox.insertAdjacentElement('afterend', paymentSection);
+                }
+
+                totalsLabels.forEach(label => {
+                    if (!label.dataset.originalText) {
+                        label.dataset.originalText = label.innerHTML;
+                    }
+                    let newLabel = label.dataset.originalText;
+                    if (newLabel.includes('Thành Tiền:')) newLabel = 'Thành<br>Tiền:';
+                    if (newLabel.includes('Tổng Tiền Sau Chiết Khấu:')) newLabel = 'Tổng Tiền<br>Sau CK:';
+                    if (newLabel.includes('Phải Thanh Toán:')) newLabel = 'TỔNG CỘNG:';
+                    label.innerHTML = newLabel;
+                });
+
+            } else {
+                const paymentSection = document.querySelector('.payment-section');
+                const leftBottomSection = document.querySelector('.left-bottom-section');
+                if (paymentSection && leftBottomSection) {
+                    leftBottomSection.prepend(paymentSection);
+                }
+            }
+        }
+        async function initializeApp() {
+            const loader = document.getElementById('loading-overlay');
+            const container = document.getElementById('bill-container');
+            const formatFromUrl = getUrlParameter('format');
+            const initialFormat = ['80mm', 'a4', 'a5'].includes(formatFromUrl) ? formatFromUrl : 'a4';
+            try {
+                await (window.location.search.length > 1 ? loadDataFromUrl() : loadDemoData());
+                changeFormat(initialFormat);
+                const logo = document.getElementById('logo-img');
+                if (logo) { await convertImageToBase64(logo); }
+                container.style.visibility = 'visible';
+                loader.classList.add('hidden');
+            } catch (error) {
+                console.error("Failed to initialize the invoice:", error);
+                loader.innerHTML = `<h1>Lỗi tải hóa đơn</h1><p>${error.message}</p>`;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            window.addEventListener('beforeprint', () => { document.querySelector('.no-print').style.display = 'none'; });
+            window.addEventListener('afterprint', () => { document.querySelector('.no-print').style.display = 'flex'; });
+        });
+    </script>
+</body>
+</html>
