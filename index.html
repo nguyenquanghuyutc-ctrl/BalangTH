@@ -41,8 +41,12 @@
         .product-note { font-size: 0.9em; color: #555; font-style: italic; }
         .products-table { width: 100%; border-collapse: collapse; }
         
-        /* === NEW BUTTON STYLE === */
         .print-options button.btn-a4-purple { background-color: #6f42c1; }
+
+        /* --- STYLES FOR CLICKABLE WEBSITE LINK --- */
+        #website-link { color: inherit; text-decoration: none; }
+        #website-link:hover { text-decoration: underline; color: #0056b3; }
+
 
         /* --- 80mm RECEIPT FORMAT --- */
         body.format-80mm { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; color: #000; }
@@ -115,13 +119,12 @@
         .format-a4 .total-row, .format-a4 .total-final, .format-a4-no-qr .total-row, .format-a4-no-qr .total-final { padding: 10px; }
         .format-a4 .footer, .format-a4-no-qr .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
         
-        /* === NEW A4 (NO QR) FORMAT STYLES === */
+        /* === A4 (NO QR) FORMAT STYLES === */
         .format-a4-no-qr .payment-section { display: none; }
         .format-a4-no-qr .bottom-section { flex-direction: column; align-items: flex-start; gap: 15px; }
         .format-a4-no-qr .left-bottom-section,
         .format-a4-no-qr .right-bottom-section { width: 100%; text-align: left; }
-        .format-a4-no-qr .right-bottom-section { max-width: 60%; /* Limit width of totals for better readability */ }
-        /* === END OF NEW STYLES === */
+        .format-a4-no-qr .right-bottom-section { max-width: 60%; }
 
         .signatures-section { display: none; }
         .format-a4 .signatures-section, .format-a4-no-qr .signatures-section {
@@ -263,7 +266,11 @@
             </div>
         </div>
 
-        <div class="footer"> <div>Cảm ơn quý khách đã sử dụng dịch vụ!</div> <div>Hotline: <span id="footer_so_dien_thoai"></span> | Website: <span id="website"></span></div> </div>
+        <div class="footer">
+            <div>Cảm ơn quý khách đã sử dụng dịch vụ!</div>
+            <!-- MODIFIED HTML FOR CLICKABLE WEBSITE -->
+            <div>Hotline: <span id="footer_so_dien_thoai"></span> | Website: <a id="website-link" href="#" target="_blank" rel="noopener noreferrer"><span id="website"></span></a></div>
+        </div>
     </div>
 
     <script>
@@ -315,7 +322,21 @@
                 try { if (finalWebsite && finalWebsite.startsWith('{') && finalWebsite.endsWith('}')) { const websiteObj = JSON.parse(finalWebsite); finalWebsite = websiteObj.Url || finalWebsite; } } catch (e) {}
                 const bankCode = getBankCodeFromName(data.bankName);
                 document.getElementById('ten_cong_ty').textContent = data.tenCongTy || 'Tên Công Ty';
-                document.getElementById('dia_chi').textContent = data.diaChi || 'N/A'; document.getElementById('so_dien_thoai').textContent = data.soDienThoai || 'N/A'; document.getElementById('email').textContent = data.email || 'N/A'; document.getElementById('footer_so_dien_thoai').textContent = data.soDienThoai || 'N/A'; document.getElementById('website').textContent = finalWebsite; document.getElementById('order-number').textContent = data.orderNumber || 'N/A'; document.getElementById('order-date').textContent = formatDate(data.orderDate); document.getElementById('customer-name').textContent = data.customerName || 'Khách lẻ';
+                document.getElementById('dia_chi').textContent = data.diaChi || 'N/A'; document.getElementById('so_dien_thoai').textContent = data.soDienThoai || 'N/A'; document.getElementById('email').textContent = data.email || 'N/A'; document.getElementById('footer_so_dien_thoai').textContent = data.soDienThoai || 'N/A'; 
+                
+                // MODIFIED JAVASCRIPT FOR CLICKABLE WEBSITE
+                const websiteSpan = document.getElementById('website');
+                const websiteLink = document.getElementById('website-link');
+                if (websiteSpan && websiteLink) {
+                    websiteSpan.textContent = finalWebsite;
+                    let fullUrl = finalWebsite;
+                    if (fullUrl && !fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+                        fullUrl = '//' + fullUrl;
+                    }
+                    websiteLink.href = fullUrl;
+                }
+
+                document.getElementById('order-number').textContent = data.orderNumber || 'N/A'; document.getElementById('order-date').textContent = formatDate(data.orderDate); document.getElementById('customer-name').textContent = data.customerName || 'Khách lẻ';
                 const addressRow = document.querySelector('.customer-address-row');
                 if (data.diaChiKhachHang) {
                     document.getElementById('customer-address').textContent = data.diaChiKhachHang;
@@ -366,10 +387,9 @@
             return populateInvoice(data);
         }
         function changeFormat(format) {
-            document.body.className = ''; // Clear all classes
+            document.body.className = ''; 
             document.body.classList.add('format-' + format);
             
-            // Because 'a4-no-qr' shares styles with 'a4', we add both classes
             if (format === 'a4-no-qr') {
                 document.body.classList.add('format-a4');
             }
